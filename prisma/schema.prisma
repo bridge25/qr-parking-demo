@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model QRCode {
+  id        String   @id @default(uuid())
+  shortId   String   @unique // 6자리, URL용
+  status    String   @default("UNREGISTERED") // UNREGISTERED, REGISTERED
+  createdAt DateTime @default(now())
+  vehicle   Vehicle?
+}
+
+model Vehicle {
+  id            String   @id @default(uuid())
+  qrCodeId      String   @unique
+  phoneNumber   String   // 실제 전화번호 (암호화 필요, 데모에선 평문)
+  vehicleNumber String   // 차량번호
+  safeNumber    String   // 안심번호 050-xxxx-xxxx (목업)
+  password      String   // 정보수정용 비밀번호 (해시)
+  registeredAt  DateTime @default(now())
+  qrCode        QRCode   @relation(fields: [qrCodeId], references: [id])
+}
