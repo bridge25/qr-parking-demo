@@ -12,7 +12,8 @@ import PasswordModal from '@/components/mobile/PasswordModal';
 import EditForm from '@/components/mobile/EditForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Loader2, Car, Settings } from 'lucide-react';
+import { AlertCircle, Loader2, Car, Settings, Home } from 'lucide-react';
+import Link from 'next/link';
 
 type QRStatus = 'UNREGISTERED' | 'REGISTERED';
 type ViewMode = 'caller' | 'edit';
@@ -174,7 +175,15 @@ export default function QRPage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-gray-600">{error}</p>
-            <Button onClick={fetchQRData}>다시 시도</Button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={fetchQRData}>다시 시도</Button>
+              <Link href="/">
+                <Button variant="outline">
+                  <Home className="w-4 h-4 mr-2" />
+                  메인으로
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </main>
@@ -229,6 +238,16 @@ export default function QRPage({ params }: PageProps) {
               <br />
               주차장에서 안심번호로 연락받으세요.
             </p>
+          </motion.div>
+
+          {/* Home Button */}
+          <motion.div variants={itemVariants}>
+            <Link href="/">
+              <Button variant="outline" className="w-full">
+                <Home className="w-4 h-4 mr-2" />
+                메인으로 돌아가기
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </motion.main>
@@ -327,6 +346,16 @@ export default function QRPage({ params }: PageProps) {
             <Settings className="w-4 h-4 mr-2" />
             <span>내 정보 수정</span>
           </Button>
+        </motion.div>
+
+        {/* Home Button */}
+        <motion.div variants={itemVariants}>
+          <Link href="/">
+            <Button variant="ghost" className="w-full text-gray-300 hover:text-white">
+              <Home className="w-4 h-4 mr-2" />
+              메인으로 돌아가기
+            </Button>
+          </Link>
         </motion.div>
       </div>
 
