@@ -39,14 +39,16 @@ const SortableHeader = ({
   sortOrder,
   handleSort,
   children,
+  className,
 }: {
   sortKey: string;
   currentSortKey: string;
   sortOrder: string;
   handleSort: (key: string) => void;
   children: React.ReactNode;
+  className?: string;
 }) => (
-  <TableHead onClick={() => handleSort(sortKey)} className="cursor-pointer">
+  <TableHead onClick={() => handleSort(sortKey)} className={`cursor-pointer ${className || ''}`}>
     <div className="flex items-center gap-2">
       {children}
       {currentSortKey === sortKey &&
