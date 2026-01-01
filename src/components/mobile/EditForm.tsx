@@ -175,8 +175,9 @@ export default function EditForm({
                 id="vehicleNumber"
                 value={vehicleNumber}
                 onChange={(e) => setVehicleNumber(e.target.value)}
-                placeholder="12가1234"
+                placeholder="12가1234 또는 158라5487"
                 disabled={isLoading}
+                maxLength={9}
               />
             </div>
 

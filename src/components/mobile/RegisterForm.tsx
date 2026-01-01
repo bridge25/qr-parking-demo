@@ -21,7 +21,8 @@ const validatePhoneNumber = (phone: string): boolean => {
 };
 
 const validateVehicleNumber = (vehicle: string): boolean => {
-  const koreanVehicleRegex = /^\d{2}[가-힣]\d{4}$/;
+  // 2자리(12가1234) 또는 3자리(158라5487) 형식 허용
+  const koreanVehicleRegex = /^\d{2,3}[가-힣]\d{4}$/;
   return koreanVehicleRegex.test(vehicle);
 };
 
@@ -116,19 +117,19 @@ export default function RegisterForm({ shortId, onSuccess }: RegisterFormProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="vehicle">차량번호 (12가1234)</Label>
+            <Label htmlFor="vehicle">차량번호 (예: 12가1234, 158라5487)</Label>
             <Input
               id="vehicle"
               type="text"
-              placeholder="12가1234"
+              placeholder="12가1234 또는 158라5487"
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
               disabled={isSubmitting}
               aria-invalid={Boolean(vehicleNumber && !validateVehicleNumber(vehicleNumber))}
-              maxLength={8}
+              maxLength={9}
             />
             {vehicleNumber && !validateVehicleNumber(vehicleNumber) && (
-              <p className="text-sm text-red-500">올바른 차량번호를 입력하세요 (예: 12가1234)</p>
+              <p className="text-sm text-red-500">올바른 차량번호를 입력하세요 (예: 12가1234 또는 158라5487)</p>
             )}
           </div>
 
