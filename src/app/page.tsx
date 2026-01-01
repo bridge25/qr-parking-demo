@@ -78,15 +78,15 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/qr/R5Q7UD"
+              href="/qr/J6UQDV"
               className="flex items-center gap-4 bg-white rounded-xl p-4 hover:shadow-lg transition-shadow"
             >
               <div className="p-3 bg-green-100 rounded-lg">
                 <Phone className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">2️⃣ 이미 등록된 차량</h3>
-                <p className="text-sm text-gray-500">바로 호출자 화면 (12가1234)</p>
+                <h3 className="font-semibold text-gray-900">2️⃣ 등록 결과 확인</h3>
+                <p className="text-sm text-gray-500">호출자 화면 (등록 후 확인)</p>
               </div>
             </Link>
           </div>
