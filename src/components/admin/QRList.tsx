@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, QrCode, Loader2 } from 'lucide-react';
+import QRCodeLib from 'qrcode';
 import {
   Table,
   TableBody,
@@ -72,6 +73,9 @@ export default function QRList() {
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState('id');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [qrImages, setQrImages] = useState<Record<string, string>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showQrId, setShowQrId] = useState<string | null>(null);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -86,6 +90,62 @@ export default function QRList() {
   const handleSearch = () => {
     setPage(1);
     setSubmittedSearchTerm(searchTerm);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      const response = await fetch('/api/admin/qr', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete');
+      }
+
+      // Refresh the list
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          qrCodes: prev.qrCodes.filter((qr) => qr.id !== id),
+          total: prev.total - 1,
+        };
+      });
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('삭제 실패: 다시 시도해주세요');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const generateQrImage = async (shortId: string) => {
+    if (qrImages[shortId]) {
+      setShowQrId(showQrId === shortId ? null : shortId);
+      return;
+    }
+
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = `${baseUrl}/qr/${shortId}`;
+      const imageDataUrl = await QRCodeLib.toDataURL(url, {
+        errorCorrectionLevel: 'H',
+        type: 'image/png',
+        width: 200,
+        margin: 1,
+      });
+      setQrImages((prev) => ({ ...prev, [shortId]: imageDataUrl }));
+      setShowQrId(shortId);
+    } catch (err) {
+      console.error('QR generation error:', err);
+    }
   };
 
   useEffect(() => {
@@ -194,6 +254,8 @@ export default function QRList() {
                 >
                   전화
                 </SortableHeader>
+                <TableHead className="text-center">QR</TableHead>
+                <TableHead className="text-center">삭제</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -214,6 +276,39 @@ export default function QRList() {
                   </TableCell>
                   <TableCell>{qr.vehicleNumber || '-'}</TableCell>
                   <TableCell>{maskPhoneNumber(qr.phoneNumber)}</TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => generateQrImage(qr.shortId)}
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </Button>
+                    {showQrId === qr.shortId && qrImages[qr.shortId] && (
+                      <div className="absolute z-10 mt-2 p-2 bg-white border rounded-lg shadow-lg">
+                        <img
+                          src={qrImages[qr.shortId]}
+                          alt={`QR ${qr.shortId}`}
+                          className="w-32 h-32"
+                        />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(qr.id)}
+                      disabled={deletingId === qr.id}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {deletingId === qr.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -234,17 +329,50 @@ export default function QRList() {
                     <span className="font-medium">{maskPhoneNumber(qr.phoneNumber)}</span>
                   </div>
                 </div>
-                <Badge
-                  variant={qr.status === 'REGISTERED' ? 'default' : 'outline'}
-                  className={
-                    `${qr.status === 'REGISTERED'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                    } whitespace-nowrap flex-shrink-0`}
-                >
-                  {qr.status === 'REGISTERED' ? '등록됨' : '미등록'}
-                </Badge>
+                <div className="flex flex-col items-end gap-2">
+                  <Badge
+                    variant={qr.status === 'REGISTERED' ? 'default' : 'outline'}
+                    className={
+                      `${qr.status === 'REGISTERED'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                      } whitespace-nowrap flex-shrink-0`}
+                  >
+                    {qr.status === 'REGISTERED' ? '등록됨' : '미등록'}
+                  </Badge>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => generateQrImage(qr.shortId)}
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(qr.id)}
+                      disabled={deletingId === qr.id}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      {deletingId === qr.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
+              {showQrId === qr.shortId && qrImages[qr.shortId] && (
+                <div className="mt-3 flex justify-center">
+                  <img
+                    src={qrImages[qr.shortId]}
+                    alt={`QR ${qr.shortId}`}
+                    className="w-32 h-32 border rounded"
+                  />
+                </div>
+              )}
             </Card>
           ))}
         </div>

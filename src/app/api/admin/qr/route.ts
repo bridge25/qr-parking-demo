@@ -1,5 +1,6 @@
 // Design-TAG-003: Admin QR List API Route
 // Function-TAG-003: GET /api/admin/qr - Return list of all QR codes
+// Function-TAG-003: DELETE /api/admin/qr - Delete QR code by ID
 // Supports pagination and filtering
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -51,6 +52,37 @@ export async function GET(request: NextRequest) {
     console.error('QR List API error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch QR codes' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'QR code ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // First delete related vehicle if exists
+    await db.vehicle.deleteMany({
+      where: { qrCodeId: id },
+    });
+
+    // Then delete the QR code
+    await db.qRCode.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('QR Delete API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete QR code' },
       { status: 500 }
     );
   }
