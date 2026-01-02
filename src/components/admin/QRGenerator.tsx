@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 interface GeneratedQRCode {
   shortId: string;
   fullUrl: string;
+  imageDataUrl?: string;
 }
 
 export default function QRGenerator() {
@@ -49,7 +50,21 @@ export default function QRGenerator() {
       }
 
       const data = await response.json();
-      setQRCodes(data.qrCodes);
+
+      // Generate QR code images for display
+      const qrCodesWithImages = await Promise.all(
+        data.qrCodes.map(async (qr: GeneratedQRCode) => {
+          const imageDataUrl = await QRCode.toDataURL(qr.fullUrl, {
+            errorCorrectionLevel: 'H',
+            type: 'image/png',
+            width: 200,
+            margin: 1,
+          });
+          return { ...qr, imageDataUrl };
+        })
+      );
+
+      setQRCodes(qrCodesWithImages);
       setError(null);
     } catch (err) {
       setError('생성 실패: 다시 시도해주세요');
@@ -140,10 +155,16 @@ export default function QRGenerator() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {qrCodes.map((qr) => (
                 <div key={qr.shortId} className="flex flex-col items-center gap-2">
-                  <div className="w-full aspect-square bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <div className="text-center p-2">
-                      <p className="text-xs font-mono">{qr.shortId}</p>
-                    </div>
+                  <div className="w-full aspect-square bg-white rounded border border-gray-300 flex items-center justify-center overflow-hidden">
+                    {qr.imageDataUrl ? (
+                      <img
+                        src={qr.imageDataUrl}
+                        alt={`QR Code ${qr.shortId}`}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <p className="text-xs font-mono text-gray-400">{qr.shortId}</p>
+                    )}
                   </div>
                   <Badge variant="outline" className="text-xs">
                     {qr.shortId}
