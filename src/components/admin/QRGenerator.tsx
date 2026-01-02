@@ -10,12 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import JSZip from 'jszip';
-import QRCode from 'qrcode';
 
 interface GeneratedQRCode {
   shortId: string;
-  fullUrl: string;
-  imageDataUrl?: string;
+  qrURL: string;
+  dataUrl: string;
 }
 
 export default function QRGenerator() {
@@ -51,20 +50,8 @@ export default function QRGenerator() {
 
       const data = await response.json();
 
-      // Generate QR code images for display
-      const qrCodesWithImages = await Promise.all(
-        data.qrCodes.map(async (qr: GeneratedQRCode) => {
-          const imageDataUrl = await QRCode.toDataURL(qr.fullUrl, {
-            errorCorrectionLevel: 'H',
-            type: 'image/png',
-            width: 200,
-            margin: 1,
-          });
-          return { ...qr, imageDataUrl };
-        })
-      );
-
-      setQRCodes(qrCodesWithImages);
+      // Server already returns dataUrl with QR images
+      setQRCodes(data.qrCodes);
       setError(null);
     } catch (err) {
       setError('생성 실패: 다시 시도해주세요');
@@ -79,13 +66,8 @@ export default function QRGenerator() {
       const zip = new JSZip();
 
       for (const qr of qrCodes) {
-        const qrImage = await QRCode.toDataURL(qr.fullUrl, {
-          errorCorrectionLevel: 'H',
-          type: 'image/png',
-          width: 200,
-        });
-
-        const base64Data = qrImage.replace(/^data:image\/png;base64,/, '');
+        // Use server-generated dataUrl directly
+        const base64Data = qr.dataUrl.replace(/^data:image\/png;base64,/, '');
         zip.file(`${qr.shortId}.png`, base64Data, { base64: true });
       }
 
@@ -156,9 +138,9 @@ export default function QRGenerator() {
               {qrCodes.map((qr) => (
                 <div key={qr.shortId} className="flex flex-col items-center gap-2">
                   <div className="w-full aspect-square bg-white rounded border border-gray-300 flex items-center justify-center overflow-hidden">
-                    {qr.imageDataUrl ? (
+                    {qr.dataUrl ? (
                       <img
-                        src={qr.imageDataUrl}
+                        src={qr.dataUrl}
                         alt={`QR Code ${qr.shortId}`}
                         className="w-full h-full object-contain"
                       />
